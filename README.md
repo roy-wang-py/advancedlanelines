@@ -99,7 +99,6 @@ dst = np.float32(
 This resulted in the following source and destination points:
 
 | Source        | Destination   | 
-|---------------|---------------|
 | 560, 476      | 460, 0        | 
 | 272, 689      | 460, h        |
 | 1050, 689     | w-460, h      |
