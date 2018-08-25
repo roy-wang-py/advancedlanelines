@@ -49,14 +49,14 @@ I start by preparing "object points", which will be the (x, y, z) coordinates of
 
 I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function.  I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result: 
 
-![alt text][image1]
+![Undistorted][image1]
 
 ### Pipeline (single images)
 
 #### 1. Provide an example of a distortion-corrected image.
 
 To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
-![alt text][image2]
+![Road Transformed][image2]
 I have got mts & dist in Camera Calibration, so i use  cv2.undistort to get a distortion-corrected image. 
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
@@ -72,7 +72,7 @@ Then test 3 pipelines with test images, and find pipeline3 is a better.
 
 Here's an example of my output for this step.  (note: this is not actually from one of the test images)
 
-![alt text][image3]
+![Binary Example][image3]
 
 #### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
@@ -109,7 +109,7 @@ I verified that my perspective transform was working as expected by drawing the 
 
 During my perspective transform, i try to cut images by choose dst in order to drop useless pixels.
 
-![alt text][image4]
+![Warp Example][image4]
 
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
@@ -119,7 +119,7 @@ These two func would find lane lines' points(pixcels), then I used fit_poly to f
 
 Then I did some other stuff and fit my lane lines with a 2nd order polynomial kinda like this:
 
-![alt text][image5]
+![Fit Visual][image5]
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
@@ -138,7 +138,7 @@ I used func draw_lane_lines to draw result back to original images.
 
 Here is an example of my result on a test image:
 
-![alt text][image6]
+![Output][image6]
 
 ---
 
