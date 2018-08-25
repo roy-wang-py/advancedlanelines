@@ -19,12 +19,12 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 
-[image1]: ./output_images/undistort_output.png "Undistorted"
-[image2]: ./output_images/test1.jpg "Road Transformed"
-[image3]: ./output_images/binary_combo_example.jpg "Binary Example"
+[image1]: ./output_images/undistort_output.jpg "Undistorted"
+[image2]: ./output_images/undist_test4.jpg "Road Transformed"
+[image3]: ./output_images/binary_combo_test4.jpg "Binary Example"
 [image4]: ./output_images/warped_straight_lines.jpg "Warp Example"
 [image5]: ./output_images/color_fit_lines.jpg "Fit Visual"
-[image6]: ./output_images/example_output.jpg "Output"
+[image6]: ./output_images/test4_output.jpg "Output"
 [video1]: ./project_video_output.mp4 "Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
@@ -57,44 +57,65 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 
 To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
 ![alt text][image2]
+I have got mts & dist in Camera Calibration, so i use  cv2.undistort to get a distortion-corrected image. 
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 
-I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines # through # in `another_file.py`).  Here's an example of my output for this step.  (note: this is not actually from one of the test images)
+
+
+I tried different COLOR space, and find that LAB's channel B could pick yellow lines, and HSV'v & RGB could pick white lines. Then try sobel_x, dir_gradient, mag_gradient, sobel_x & mag_gradient work well, but still too may other lines picked.
+I create 3 pipelines:
+    1)pipeline: using sobel_x, HLS
+    2)pipeline2:using HLS, LAB, RGB
+    3)pipeline3： using HSV, LAB, RGB(similar with pipeline2)
+Then test 3 pipelines with test images, and find pipeline3 is a better.
+
+Here's an example of my output for this step.  (note: this is not actually from one of the test images)
 
 ![alt text][image3]
 
 #### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
-The code for my perspective transform includes a function called `warper()`, which appears in lines 1 through 8 in the file `example.py` (output_images/examples/example.py) (or, for example, in the 3rd code cell of the IPython notebook).  The `warper()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
+The code for my perspective transform includes a function called `warp_img()`, which appears in lines 1 through 8 in cell "Apply a perspective transform to rectify binary image ("birds-eye view")." (output_images/examples/example.py) (or, for example, in the 3rd code cell of the IPython notebook).  The `warper()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
 
 ```python
+h,w = image.shape[:2]
+
 src = np.float32(
-    [[(img_size[0] / 2) - 55, img_size[1] / 2 + 100],
-    [((img_size[0] / 6) - 10), img_size[1]],
-    [(img_size[0] * 5 / 6) + 60, img_size[1]],
-    [(img_size[0] / 2 + 55), img_size[1] / 2 + 100]])
+        [
+            (727,476),
+            (1050,689),
+            (272,689),
+            (560,476)
+        ])
 dst = np.float32(
-    [[(img_size[0] / 4), 0],
-    [(img_size[0] / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), 0]])
-```
+        [
+            (w-460,0),
+            (w-460,h),
+            (460,h),
+            (460,0)
+        ])
 
 This resulted in the following source and destination points:
 
 | Source        | Destination   | 
 |:-------------:|:-------------:| 
-| 585, 460      | 320, 0        | 
-| 203, 720      | 320, 720      |
-| 1127, 720     | 960, 720      |
-| 695, 460      | 960, 0        |
+| 560, 476      | 460, 0        | 
+| 272, 689      | 460, h      |
+| 1050, 689     | w-460, h      |
+| 727, 476      | w-460, 0        |
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
+
+During my perspective transform, i try to cut images by choose dst in order to drop useless pixels.
 
 ![alt text][image4]
 
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
+
+I used find_lane_pixels to find lane lines in a perspective transform images, and used search_around_poly to search lane lines in a continous image based on pre one.
+
+These two func would find lane lines' points(pixcels), then I used fit_poly to fit these points.
 
 Then I did some other stuff and fit my lane lines with a 2nd order polynomial kinda like this:
 
@@ -102,11 +123,20 @@ Then I did some other stuff and fit my lane lines with a 2nd order polynomial ki
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
-I did this in lines # through # in my code in `my_other_file.py`
+I did this by func measure_curvature_and_offset.
+To calculate curvature, used:
+    left_curverad = ((1 + (2*left_fit_cr[0]*y_eval*ym_per_pix + left_fit_cr[1])**2)**1.5) / np.absolute(2*left_fit_cr[0])
+    
+To get center posion:
+    I got left line based point (l,height), and right line based point(r,height), by setting y = height(height is the images' shape in axis y).
+    Now i know lane lines' center = (r-l) / 2. Position of the vehicle with respect to center is offset of lane lines' center and images' center.
+  
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
-I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
+I used func draw_lane_lines to draw result back to original images.
+
+Here is an example of my result on a test image:
 
 ![alt text][image6]
 
@@ -116,7 +146,7 @@ I implemented this step in lines # through # in my code in `yet_another_file.py`
 
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
 
-Here's a [link to my video result](./project_video.mp4)
+Here's a [link to my video result](./project_video_output.mp4)
 
 ---
 
@@ -125,3 +155,9 @@ Here's a [link to my video result](./project_video.mp4)
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
 Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+
+1) My pipeline did not work well with challenge video & hard challenge video.
+2) When some other white lines in lane detected, my pipeline would take it as lane lines. Maybe i could make the sliding window size smaller.
+3) I have tried used relative value as threshold by values / max(values), while it did not work well in some special scene. 
+4) When dealing with challenge video, i update Class Line's fit.While i should check current fit, and drop those had great difference compared to best fit. I tried ,but still work bad. I should improved it.
+5) As light differs, using RGB to pick white lines is not reliable.  My pipeline is good at pick yellow line(LAB works well), so I should calculate  white lines  by yellow lines picked.
